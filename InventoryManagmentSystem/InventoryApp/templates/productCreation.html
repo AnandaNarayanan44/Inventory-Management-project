@@ -14,7 +14,7 @@
 
         <!-- Form Body -->
         <div class="form-body">
-            <form method="post" action="/products/create/" enctype="multipart/form-data" id="productForm">
+            <form method="post" action="{% url 'createProduct' %}" enctype="multipart/form-data" id="productForm">
                 {% csrf_token %}
                 
                 <!-- Basic Information Section -->

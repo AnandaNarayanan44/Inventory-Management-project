@@ -38,7 +38,7 @@
             <div class="table-header">
                 <h2 class="table-title">All Products</h2>
                 <span class="table-count">
-                    <i class="fas fa-box"></i> 12 Products
+                    <i class="fas fa-box"></i> {{product_count}}
                 </span>
             </div>
 
@@ -48,24 +48,18 @@
                         <tr>
                             <th>Product Name</th>
                             <th>Category</th>
-                            <th>Quantity</th>
                             <th>Price</th>
-                            <th>Last Updated</th>
+                            <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody>
+                        {% for prd in products%}
                         <tr>
-                            <td><strong>Wireless Mouse Pro</strong></td>
-                            <td><span class="category-badge category-electronics">Electronics</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>156 units</span>
-                                </div>
-                            </td>
-                            <td>$29.99</td>
-                            <td>2025-10-08</td>
+                            <td><strong>{{prd.name}}</strong></td>
+                            <td><span class="category-badge category-{{ prd.category|slugify }}">{{prd.category}}</span></td>
+                            <td>₹{{prd.price}}</td>
+                            <td>{{prd.date_added}}</td>
                             <td>
                                 <div class="action-buttons-cell">
                                     <button class="btn-action btn-edit" title="Edit">
@@ -77,248 +71,7 @@
                                 </div>
                             </td>
                         </tr>
-                        <tr>
-                            <td><strong>Office Chair Ergonomic</strong></td>
-                            <td><span class="category-badge category-furniture">Furniture</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-medium"></span>
-                                    <span>45 units</span>
-                                </div>
-                            </td>
-                            <td>$249.99</td>
-                            <td>2025-10-07</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>LED Desk Lamp</strong></td>
-                            <td><span class="category-badge category-lighting">Lighting</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>89 units</span>
-                                </div>
-                            </td>
-                            <td>$39.99</td>
-                            <td>2025-10-06</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>USB-C Cable 2m</strong></td>
-                            <td><span class="category-badge category-accessories">Accessories</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>234 units</span>
-                                </div>
-                            </td>
-                            <td>$12.99</td>
-                            <td>2025-10-05</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Notebook A5 Pack</strong></td>
-                            <td><span class="category-badge category-stationery">Stationery</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>412 units</span>
-                                </div>
-                            </td>
-                            <td>$8.99</td>
-                            <td>2025-10-04</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Mechanical Keyboard RGB</strong></td>
-                            <td><span class="category-badge category-electronics">Electronics</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-medium"></span>
-                                    <span>78 units</span>
-                                </div>
-                            </td>
-                            <td>$89.99</td>
-                            <td>2025-10-03</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Wireless Headphones</strong></td>
-                            <td><span class="category-badge category-electronics">Electronics</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-low"></span>
-                                    <span>18 units</span>
-                                </div>
-                            </td>
-                            <td>$79.99</td>
-                            <td>2025-10-02</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Standing Desk Converter</strong></td>
-                            <td><span class="category-badge category-furniture">Furniture</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-medium"></span>
-                                    <span>32 units</span>
-                                </div>
-                            </td>
-                            <td>$199.99</td>
-                            <td>2025-10-01</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>HDMI Cable 3m</strong></td>
-                            <td><span class="category-badge category-accessories">Accessories</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>145 units</span>
-                                </div>
-                            </td>
-                            <td>$15.99</td>
-                            <td>2025-09-30</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Pen Set Premium</strong></td>
-                            <td><span class="category-badge category-stationery">Stationery</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-high"></span>
-                                    <span>287 units</span>
-                                </div>
-                            </td>
-                            <td>$19.99</td>
-                            <td>2025-09-29</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Webcam HD 1080p</strong></td>
-                            <td><span class="category-badge category-electronics">Electronics</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-low"></span>
-                                    <span>12 units</span>
-                                </div>
-                            </td>
-                            <td>$59.99</td>
-                            <td>2025-09-28</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td><strong>Floor Lamp Modern</strong></td>
-                            <td><span class="category-badge category-lighting">Lighting</span></td>
-                            <td>
-                                <div class="stock-status">
-                                    <span class="stock-indicator stock-medium"></span>
-                                    <span>56 units</span>
-                                </div>
-                            </td>
-                            <td>$129.99</td>
-                            <td>2025-09-27</td>
-                            <td>
-                                <div class="action-buttons-cell">
-                                    <button class="btn-action btn-edit" title="Edit">
-                                        <i class="fas fa-pencil-alt"></i>
-                                    </button>
-                                    <button class="btn-action btn-delete" title="Delete">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>
