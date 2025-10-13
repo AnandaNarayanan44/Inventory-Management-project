@@ -1,0 +1,207 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+
+
+<div class="import-container">
+    <div class="import-card">
+        <!-- Header -->
+        <div class="import-header">
+            <i class="fas fa-file-csv"></i>
+            <h1>Import Products via CSV</h1>
+            <p>Bulk upload your product inventory quickly and easily</p>
+        </div>
+
+        <!-- Body -->
+        <div class="import-body">
+            <!-- CSV Format Information -->
+            <div class="info-section">
+                <h4>
+                    <i class="fas fa-info-circle"></i>
+                    CSV Format Requirements
+                </h4>
+                <ul class="csv-format-list">
+                    <li>
+                        <i class="fas fa-circle"></i>
+                        <span>Required columns: <code>name</code>, <code>category</code>, <code>price</code></span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle"></i>
+                        <span>Optional columns: <code>description</code>, <code>gst</code>, <code>quantity</code></span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle"></i>
+                        <span>First row must contain column headers</span>
+                    </li>
+                    <li>
+                        <i class="fas fa-circle"></i>
+                        <span>Use UTF-8 encoding for special characters</span>
+                    </li>
+                </ul>
+                <a href="#" class="template-download" onclick="downloadTemplate(event)">
+                    <i class="fas fa-download"></i>
+                    Download CSV Template
+                </a>
+            </div>
+
+            <!-- Warning Section -->
+            <div class="warning-section">
+                <p>
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span>Make sure your CSV file is properly formatted. Duplicate product names may be updated or skipped based on your system settings.</span>
+                </p>
+            </div>
+
+            <!-- Upload Form -->
+            <form method="post" enctype="multipart/form-data" id="uploadForm">
+                {% csrf_token %}
+                
+                <div class="upload-section">
+                    <div class="section-title">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                        Upload CSV File
+                    </div>
+
+                    <div class="file-drop-zone" id="dropZone">
+                        <i class="fas fa-file-csv upload-icon"></i>
+                        <div class="upload-text">
+                            <h3>Drop your CSV file here or click to browse</h3>
+                            <p>Select a file from your computer</p>
+                            <div class="file-requirements">
+                                <i class="fas fa-check-circle"></i>
+                                <span>CSV files only • Max 10MB</span>
+                            </div>
+                        </div>
+                        <input type="file" 
+                               name="csv_file" 
+                               id="csvFile" 
+                               accept=".csv" 
+                               class="file-input-hidden" 
+                               required>
+                    </div>
+
+                    <div class="selected-file" id="selectedFile">
+                        <div class="file-icon">
+                            <i class="fas fa-file-csv"></i>
+                        </div>
+                        <div class="file-details">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-size" id="fileSize"></div>
+                        </div>
+                        <button type="button" class="remove-file" id="removeFile">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'product page' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary" id="submitBtn" disabled>
+                        <i class="fas fa-upload"></i>
+                        Upload & Import
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dropZone = document.getElementById('dropZone');
+    const csvFile = document.getElementById('csvFile');
+    const selectedFile = document.getElementById('selectedFile');
+    const fileName = document.getElementById('fileName');
+    const fileSize = document.getElementById('fileSize');
+    const removeFile = document.getElementById('removeFile');
+    const submitBtn = document.getElementById('submitBtn');
+
+    // Click to upload
+    dropZone.addEventListener('click', () => {
+        csvFile.click();
+    });
+
+    // File selection
+    csvFile.addEventListener('change', (e) => {
+        handleFile(e.target.files[0]);
+    });
+
+    // Drag and drop
+    dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('dragover');
+        
+        const file = e.dataTransfer.files[0];
+        if (file && file.name.endsWith('.csv')) {
+            csvFile.files = e.dataTransfer.files;
+            handleFile(file);
+        } else {
+            alert('Please upload a CSV file only.');
+        }
+    });
+
+    // Handle file display
+    function handleFile(file) {
+        if (file) {
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            selectedFile.classList.add('show');
+            submitBtn.disabled = false;
+        }
+    }
+
+    // Remove file
+    removeFile.addEventListener('click', () => {
+        csvFile.value = '';
+        selectedFile.classList.remove('show');
+        submitBtn.disabled = true;
+    });
+
+    // Format file size
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    }
+
+    // Download CSV template
+    function downloadTemplate(e) {
+        e.preventDefault();
+        
+        const csvContent = "name,category,price,description,gst,quantity\n" +
+                          "Wireless Mouse,Electronics,29.99,High precision wireless mouse,18,100\n" +
+                          "Office Chair,Furniture,249.99,Ergonomic office chair,12,50\n" +
+                          "LED Lamp,Lighting,39.99,Energy efficient LED desk lamp,18,75";
+        
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'product_template.csv';
+        a.click();
+        window.URL.revokeObjectURL(url);
+    }
+
+    // Form submission feedback
+    document.getElementById('uploadForm').addEventListener('submit', function(e) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Uploading...';
+        submitBtn.disabled = true;
+    });
+</script>
+
+{% endblock body %}

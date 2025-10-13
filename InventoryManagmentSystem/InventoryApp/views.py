@@ -1,6 +1,7 @@
-from django.shortcuts import render,HttpResponse
+from django.shortcuts import redirect, render, HttpResponse, get_object_or_404
 from .models import Product
 from django.contrib import messages
+import csv
 # Create your views here.
 def index(request):
     return render(request,'index.html')
@@ -36,3 +37,50 @@ def productCreate(request):
             messages.error(request, f"Error creating product: {e}")
     return render(request,'productCreation.html')
 
+
+def productEdit(request,pk):
+    product=get_object_or_404(Product,id=pk)
+    #print(product)
+    if request.method == 'POST':
+        product.name = request.POST.get('name')
+        product.category = request.POST.get('category')
+        product.description = request.POST.get('description')
+        product.price = request.POST.get('price')
+        product.gst = request.POST.get('gst')
+
+        if 'image' in request.FILES:
+            product.image = request.FILES['image']
+
+        product.save()
+        return redirect('product page')
+    return render(request,'editProduct.html',{'product': product})
+
+def productDelete(request, pk):
+    product = get_object_or_404(Product, id=pk)
+    product.delete()
+    return redirect('product page')
+
+def uplodeCsv(request):
+    if request.method == 'POST' and request.FILES.get('csv_file'):
+        csv_file = request.FILES['csv_file']
+        try:
+            decode_file = csv_file.read().decode('utf-8').splitlines()
+            reader = csv.DictReader(decode_file)
+            
+            for row in reader:
+                try:
+                    Product.objects.update_or_create(
+                        name=row.get('name', '').strip(),
+                        defaults={
+                            'category': row.get('category', '').strip(),
+                            'price': float(row.get('price', 0)),
+                            'gst': float(row.get('gst', 0)),
+                            'description': row.get('description', '').strip()
+                        }
+                    )
+                except Exception as e_row:
+                    print(f"Skipping row due to error: {row}, Error: {e_row}")
+            messages.success(request, "CSV uploaded successfully!")
+        except Exception as e:
+            messages.error(request, f"Failed to process CSV: {e}")
+    return render(request, 'csvUplode.html')

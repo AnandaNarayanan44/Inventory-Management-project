@@ -1,0 +1,36 @@
+ /* Current Image Styles */
+ .current-image-wrapper {
+     margin-bottom: 1.5rem;
+ }
+
+ .current-image-container {
+     position: relative;
+     max-width: 300px;
+     border-radius: 10px;
+     overflow: hidden;
+     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+     margin-top: 0.75rem;
+ }
+
+ .current-image {
+     width: 100%;
+     height: auto;
+     display: block;
+     max-height: 300px;
+     object-fit: cover;
+ }
+
+ .image-overlay {
+     position: absolute;
+     bottom: 0;
+     left: 0;
+     right: 0;
+     background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+     padding: 1rem;
+     color: white;
+ }
+
+ .image-name {
+     font-size: 0.875rem;
+     font-weight: 500;
+ }

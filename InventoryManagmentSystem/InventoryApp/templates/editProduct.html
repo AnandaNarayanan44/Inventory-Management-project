@@ -1,0 +1,241 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+<div class="form-container">
+    <div class="form-card">
+        <!-- Form Header -->
+        <div class="form-header">
+            <i class="fas fa-edit"></i>
+            <h1>Edit Product</h1>
+            <p>Update the product details below</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="form-body">
+            <form method="post" action="{% url 'productEdit' product.id %}" enctype="multipart/form-data" id="productForm">
+                {% csrf_token %}
+                
+                <!-- Basic Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-info-circle"></i>
+                        Basic Information
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="name">
+                            <i class="fas fa-tag"></i>
+                            Product Name
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-box input-icon"></i>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="name" 
+                                   name="name" 
+                                   value="{{ product.name }}"
+                                   placeholder="e.g., Wireless Mouse Pro" 
+                                   required />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="category">
+                            <i class="fas fa-list"></i>
+                            Category
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-folder input-icon"></i>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="">Select a category</option>
+                                <option value="Electronics" {% if product.category == 'Electronics' %}selected{% endif %}>Electronics</option>
+                                <option value="Furniture" {% if product.category == 'Furniture' %}selected{% endif %}>Furniture</option>
+                                <option value="Accessories" {% if product.category == 'Accessories' %}selected{% endif %}>Accessories</option>
+                                <option value="Stationery" {% if product.category == 'Stationery' %}selected{% endif %}>Stationery</option>
+                                <option value="Lighting" {% if product.category == 'Lighting' %}selected{% endif %}>Lighting</option>
+                                <option value="Grocery" {% if product.category == 'Grocery' %}selected{% endif %}>Grocery</option>
+                                <option value="Fashion" {% if product.category == 'Fashion' %}selected{% endif %}>Fashion</option>
+                                <option value="Health" {% if product.category == 'Health' %}selected{% endif %}>Health</option>
+                                <option value="Home" {% if product.category == 'Home' %}selected{% endif %}>Home</option>
+                                <option value="Sports" {% if product.category == 'Sports' %}selected{% endif %}>Sports</option>
+                                <option value="Food" {% if product.category == 'Food' %}selected{% endif %}>Food</option>
+                            </select>
+                        </div>
+                        <div class="helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            Choose the most relevant category for your product
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="description">
+                            <i class="fas fa-align-left"></i>
+                            Description
+                        </label>
+                        <textarea class="form-control" 
+                                  id="description" 
+                                  name="description" 
+                                  placeholder="Enter detailed product description, features, and specifications...">{{ product.description }}</textarea>
+                        <div class="helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            Provide a detailed description to help identify the product
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing Information Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-dollar-sign"></i>
+                        Pricing Information
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="price">
+                                <i class="fas fa-rupee-sign"></i>
+                                Price (₹)
+                                <span class="required">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-indian-rupee-sign input-icon"></i>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="price" 
+                                       name="price" 
+                                       step="0.01" 
+                                       min="0"
+                                       value="{{ product.price }}"
+                                       placeholder="0.00" 
+                                       required />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="gst">
+                                <i class="fas fa-percent"></i>
+                                GST (%)
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-percentage input-icon"></i>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="gst" 
+                                       name="gst" 
+                                       step="0.01" 
+                                       min="0"
+                                       max="100"
+                                       value="{{ product.gst|default:'0.00' }}" 
+                                       placeholder="0.00" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Image Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-image"></i>
+                        Product Image
+                    </div>
+
+                    <!-- Current Image Display -->
+                    {% if product.image %}
+                    <div class="current-image-wrapper">
+                        <label class="form-label">Current Image:</label>
+                        <div class="current-image-container">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}" class="current-image">
+                            <div class="image-overlay">
+                                <span class="image-name">{{ product.image.name|truncatechars:30 }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="form-group">
+                        <label class="form-label" for="image">
+                            {% if product.image %}
+                            Update Image (Optional)
+                            {% else %}
+                            Upload Image
+                            {% endif %}
+                        </label>
+                        <div class="file-upload-wrapper">
+                            <label for="image" class="file-upload-label">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <div class="file-upload-text">
+                                    <strong>Click to upload {% if product.image %}new image{% else %}or drag and drop{% endif %}</strong>
+                                    <small>PNG, JPG, JPEG (MAX. 5MB)</small>
+                                </div>
+                            </label>
+                            <input type="file" 
+                                   id="image" 
+                                   name="image" 
+                                   accept="image/png,image/jpeg,image/jpg" />
+                        </div>
+                        <div class="file-name-display" id="fileNameDisplay">
+                            <i class="fas fa-check-circle"></i>
+                            <span id="fileName"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'productEdit' pk=product.id %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i>
+                        Update Product
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    // File upload display
+    document.getElementById('image').addEventListener('change', function(e) {
+        const fileNameDisplay = document.getElementById('fileNameDisplay');
+        const fileName = document.getElementById('fileName');
+        
+        if (e.target.files.length > 0) {
+            fileName.textContent = e.target.files[0].name;
+            fileNameDisplay.classList.add('show');
+        } else {
+            fileNameDisplay.classList.remove('show');
+        }
+    });
+
+    // Form validation feedback
+    document.getElementById('productForm').addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Highlight invalid fields
+            const invalidFields = form.querySelectorAll(':invalid');
+            invalidFields.forEach(field => {
+                field.style.borderColor = 'var(--danger-color)';
+            });
+        }
+    });
+
+    // Remove error styling on input
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    });
+</script>
+
+{% endblock body %}
