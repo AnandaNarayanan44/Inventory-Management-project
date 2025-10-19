@@ -84,3 +84,19 @@ def uplodeCsv(request):
         except Exception as e:
             messages.error(request, f"Failed to process CSV: {e}")
     return render(request, 'csvUplode.html')
+
+def exportCsv(request):
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="products.csv"'
+    writer = csv.writer(response)
+    writer.writerow(['name', 'category', 'price', 'description', 'gst'])
+    for product in Product.objects.all():
+        writer.writerow([
+            product.name,
+            product.category,
+            product.price,
+            product.description,
+            product.gst
+        ])
+
+    return response

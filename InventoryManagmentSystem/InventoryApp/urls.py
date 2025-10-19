@@ -9,5 +9,7 @@ urlpatterns = [
     path('productEdit/<int:pk>',views.productEdit,name='productEdit'),
     path('productDelete/<int:pk>/', views.productDelete, name='product delete'),
     path('uplodeCsv',views.uplodeCsv,name='uplodeCsv'),
+    path('exportCsv', views.exportCsv, name='exportCsv'),
+
     
 ]

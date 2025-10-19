@@ -183,10 +183,10 @@
     function downloadTemplate(e) {
         e.preventDefault();
         
-        const csvContent = "name,category,price,description,gst,quantity\n" +
-                          "Wireless Mouse,Electronics,29.99,High precision wireless mouse,18,100\n" +
-                          "Office Chair,Furniture,249.99,Ergonomic office chair,12,50\n" +
-                          "LED Lamp,Lighting,39.99,Energy efficient LED desk lamp,18,75";
+        const csvContent = "name,category,price,description,gst\n" +
+                          "Wireless Mouse,Electronics,29.99,High precision wireless mouse,18\n" +
+                          "Office Chair,Furniture,249.99,Ergonomic office chair,12\n" +
+                          "LED Lamp,Lighting,39.99,Energy efficient LED desk lamp,18";
         
         const blob = new Blob([csvContent], { type: 'text/csv' });
         const url = window.URL.createObjectURL(blob);
