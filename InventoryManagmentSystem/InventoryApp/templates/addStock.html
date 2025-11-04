@@ -1,0 +1,228 @@
+{% extends 'base.html' %}
+
+{% block body %}
+
+
+
+<div class="form-container">
+    <div class="form-card">
+        <!-- Form Header -->
+        <div class="form-header">
+            <i class="fas fa-plus-circle"></i>
+            <h1>Add Stock</h1>
+            <p>Increase inventory quantity for products in your warehouse</p>
+        </div>
+
+        <!-- Form Body -->
+        <div class="form-body">
+            <!-- Success/Error Messages -->
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }}">
+                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
+                        <span>{{ message }}</span>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" action="{% url 'addStock' %}" id="addStockForm">
+                {% csrf_token %}
+                
+                <!-- Product Selection Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-box"></i>
+                        Product Information
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="product">
+                            <i class="fas fa-cube"></i>
+                            Select Product
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-box-open input-icon"></i>
+                            <select class="form-select" id="product" name="product" required>
+                                <option value="">Choose a product...</option>
+                                {% for product in products %}
+                                <option value="{{ product.id }}">{{ product.name }} - {{ product.category }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            Select the product you want to add stock for
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="quantity">
+                            <i class="fas fa-hashtag"></i>
+                            Quantity to Add
+                            <span class="required">*</span>
+                        </label>
+                        <div class="input-group">
+                            <i class="fas fa-boxes input-icon"></i>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="quantity" 
+                                   name="quantity" 
+                                   min="1"
+                                   placeholder="Enter quantity to add" 
+                                   required />
+                        </div>
+                        <div class="helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            Enter the number of units to add to inventory
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Location & Supplier Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-warehouse"></i>
+                        Location & Supplier Details
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="warehouse">
+                                <i class="fas fa-map-marker-alt"></i>
+                                Warehouse Location
+                                <span class="required">*</span>
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-warehouse input-icon"></i>
+                                <select class="form-select" id="warehouse" name="warehouse" required>
+                                    <option value="">Select warehouse...</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}">{{ warehouse.name }} - {{ warehouse.location }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="supplier">
+                                <i class="fas fa-truck"></i>
+                                Supplier
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-user-tie input-icon"></i>
+                                <select class="form-select" id="supplier" name="supplier">
+                                    <option value="">Select supplier (optional)...</option>
+                                    {% for supplier in suppliers %}
+                                    <option value="{{ supplier.id }}">{{ supplier.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Details Section -->
+                <div class="form-section">
+                    <div class="section-title">
+                        <i class="fas fa-calendar-alt"></i>
+                        Additional Details
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label" for="expiry_date">
+                                <i class="fas fa-clock"></i>
+                                Expiry Date
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-calendar-day input-icon"></i>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="expiry_date" 
+                                       name="expiry_date" />
+                            </div>
+                            <div class="helper-text">
+                                <i class="fas fa-info-circle"></i>
+                                Leave blank if product doesn't expire
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" for="batch_number">
+                                <i class="fas fa-barcode"></i>
+                                Batch Number
+                            </label>
+                            <div class="input-group">
+                                <i class="fas fa-hashtag input-icon"></i>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="batch_number" 
+                                       name="batch_number" 
+                                       placeholder="e.g., BATCH-2025-001" />
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="notes">
+                            <i class="fas fa-sticky-note"></i>
+                            Notes
+                        </label>
+                        <textarea class="form-control" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="3"
+                                  placeholder="Add any additional notes or remarks..."></textarea>
+                        <div class="helper-text">
+                            <i class="fas fa-info-circle"></i>
+                            Optional notes about this stock addition
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="form-actions">
+                    <a href="{% url 'inventory' %}" class="btn btn-secondary">
+                        <i class="fas fa-times"></i>
+                        Cancel
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-check"></i>
+                        Add Stock
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Form validation feedback
+    document.getElementById('addStockForm').addEventListener('submit', function(e) {
+        const form = e.target;
+        if (!form.checkValidity()) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            // Highlight invalid fields
+            const invalidFields = form.querySelectorAll(':invalid');
+            invalidFields.forEach(field => {
+                field.style.borderColor = 'var(--danger-color)';
+            });
+        }
+    });
+
+    // Remove error styling on input
+    document.querySelectorAll('.form-control, .form-select').forEach(input => {
+        input.addEventListener('input', function() {
+            this.style.borderColor = '';
+        });
+    });
+
+    // Set minimum date to today for expiry date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('expiry_date').setAttribute('min', today);
+</script>
+
+{% endblock body %}

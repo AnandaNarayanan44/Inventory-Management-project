@@ -12,6 +12,9 @@
     <link rel="stylesheet" href="{% static 'css/productCreation.css'%}">
     <link rel="stylesheet" href="{% static 'css/editProduct.css'%}">
     <link rel="stylesheet" href="{% static 'css/csvUplode.css'%}">
+    <link rel="stylesheet" href="{% static 'css/inventory.css'%}">
+    <link rel="stylesheet" href="{% static 'css/addStock.css' %}">
+    <link rel="stylesheet" href="{% static 'css/reduceStock.css'%}">
 </head>
 <body>
     <!-- Navbar -->
@@ -37,7 +40,7 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="inventory.html">
+                        <a class="nav-link" href="{% url 'inventory'%}">
                             <i class="fas fa-warehouse"></i> Inventory
                         </a>
                     </li>

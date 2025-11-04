@@ -100,3 +100,18 @@ def exportCsv(request):
         ])
 
     return response
+
+
+
+
+#inventory management area
+
+def inventory(request):
+    return render(request,'inventory.html')
+
+
+def stockAdding(request):
+    return render(request,'addStock.html')
+
+def stockReducing(request):
+    return render(request,'reduceStock.html')
