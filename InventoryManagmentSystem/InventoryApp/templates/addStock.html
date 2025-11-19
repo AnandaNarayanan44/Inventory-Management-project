@@ -43,12 +43,12 @@
                         </label>
                         <div class="input-group">
                             <i class="fas fa-box-open input-icon"></i>
-                            <select class="form-select" id="product" name="product" required>
-                                <option value="">Choose a product...</option>
-                                {% for product in products %}
-                                <option value="{{ product.id }}">{{ product.name }} - {{ product.category }}</option>
-                                {% endfor %}
-                            </select>
+<select class="form-select" id="product" name="product" required>
+    <option value="">Choose a product...</option>
+    {% for product in products %}
+        <option value="{{ product.id }}">{{ product.name }} - {{ product.category }}</option>
+    {% endfor %}
+</select>
                         </div>
                         <div class="helper-text">
                             <i class="fas fa-info-circle"></i>

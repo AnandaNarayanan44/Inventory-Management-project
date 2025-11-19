@@ -12,7 +12,8 @@ urlpatterns = [
     path('exportCsv', views.exportCsv, name='exportCsv'),
     path('inventory',views.inventory,name='inventory'),
     path('addStock',views.stockAdding,name='addStock'),
-    path('reduceStock',views.stockReducing,name='reduceStock')
+    path('reduceStock',views.stockReducing,name='reduceStock'),
+    path('addSupplier',views.addSupplier,name='addSupplier'),
 
     
 ]

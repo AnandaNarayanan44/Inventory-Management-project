@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render, HttpResponse, get_object_or_404
-from .models import Product
+from .models import Product,Supplier
 from django.contrib import messages
 import csv
 # Create your views here.
@@ -111,7 +111,36 @@ def inventory(request):
 
 
 def stockAdding(request):
-    return render(request,'addStock.html')
+    product=Product.objects.all()
+    suppliers=Supplier.objects.all()
+    context={
+        'suppliers':suppliers,
+        'products':product
+    }
+    #print(suppliers.values())
+    #print(product)  
+    
+    return render(request,'addStock.html',context)
 
 def stockReducing(request):
     return render(request,'reduceStock.html')
+
+def addSupplier(request):
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        contact_number = request.POST.get('contact_number')
+        email = request.POST.get('email')
+        address = request.POST.get('address')
+
+        try:
+            supplier = Supplier.objects.create(
+                name=name,
+                contact_number=contact_number,
+                email=email,
+                address=address
+            )
+            supplier.save()
+            messages.success(request, "Supplier added successfully!")
+        except Exception as e:
+            messages.error(request, f"Error adding supplier: {e}")
+    return render(request,'addSupplier.html')
