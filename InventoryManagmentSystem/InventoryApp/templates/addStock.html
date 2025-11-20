@@ -15,15 +15,6 @@
 
         <!-- Form Body -->
         <div class="form-body">
-            <!-- Success/Error Messages -->
-            {% if messages %}
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }}">
-                        <i class="fas fa-{% if message.tags == 'success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>
-                        <span>{{ message }}</span>
-                    </div>
-                {% endfor %}
-            {% endif %}
 
             <form method="post" action="{% url 'addStock' %}" id="addStockForm">
                 {% csrf_token %}
@@ -83,26 +74,10 @@
                 <div class="form-section">
                     <div class="section-title">
                         <i class="fas fa-warehouse"></i>
-                        Location & Supplier Details
+                        Supplier Details
                     </div>
 
                     <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="warehouse">
-                                <i class="fas fa-map-marker-alt"></i>
-                                Warehouse Location
-                                <span class="required">*</span>
-                            </label>
-                            <div class="input-group">
-                                <i class="fas fa-warehouse input-icon"></i>
-                                <select class="form-select" id="warehouse" name="warehouse" required>
-                                    <option value="">Select warehouse...</option>
-                                    {% for warehouse in warehouses %}
-                                    <option value="{{ warehouse.id }}">{{ warehouse.name }} - {{ warehouse.location }}</option>
-                                    {% endfor %}
-                                </select>
-                            </div>
-                        </div>
 
                         <div class="form-group">
                             <label class="form-label" for="supplier">
@@ -123,12 +98,41 @@
                 </div>
 
                 <!-- Additional Details Section -->
+
                 <div class="form-section">
                     <div class="section-title">
                         <i class="fas fa-calendar-alt"></i>
                         Additional Details
                     </div>
+                      <div class="form-group">
+    <label class="form-label" for="barcode">
+        <i class="fas fa-barcode"></i>
+        Barcode
+        <span class="required">*</span>
+    </label>
 
+    <div class="input-group" style="display: flex; align-items: center; gap: 10px;">
+        <i class="fas fa-barcode input-icon"></i>
+        
+        <input type="text" 
+               class="form-control" 
+               id="barcode" 
+               name="barcode" 
+               placeholder="Enter or generate barcode"
+               required />
+
+        <button type="button" 
+                class="btn btn-primary" 
+                onclick="generateBarcode()">
+            <i class="fas fa-magic"></i> Generate
+        </button>
+    </div>
+
+    <div class="helper-text">
+        <i class="fas fa-info-circle"></i>
+        Enter an existing barcode or auto-generate one
+    </div>
+</div>
                     <div class="form-row">
                         <div class="form-group">
                             <label class="form-label" for="expiry_date">
@@ -223,6 +227,22 @@
     // Set minimum date to today for expiry date
     const today = new Date().toISOString().split('T')[0];
     document.getElementById('expiry_date').setAttribute('min', today);
+
+
+    function generateBarcode() {
+    // Super simple but effective: timestamp + random 3 digits
+    const randomPart = Math.floor(100 + Math.random() * 900); 
+    const barcode = Date.now().toString() + randomPart.toString();
+
+    document.getElementById('barcode').value = barcode;
+
+    // Optional highlight animation
+    document.getElementById('barcode').style.borderColor = "var(--success-color)";
+    setTimeout(() => {
+        document.getElementById('barcode').style.borderColor = "";
+    }, 1000);
+}
+
 </script>
 
 {% endblock body %}

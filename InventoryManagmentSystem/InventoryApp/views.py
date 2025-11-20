@@ -1,5 +1,5 @@
 from django.shortcuts import redirect, render, HttpResponse, get_object_or_404
-from .models import Product,Supplier
+from .models import Product,Supplier,StockEntry
 from django.contrib import messages
 import csv
 # Create your views here.
@@ -111,16 +111,47 @@ def inventory(request):
 
 
 def stockAdding(request):
-    product=Product.objects.all()
-    suppliers=Supplier.objects.all()
-    context={
-        'suppliers':suppliers,
-        'products':product
+
+    if request.method == 'POST':
+        product_id = request.POST.get('product')
+        supplier_id = request.POST.get('supplier')
+        quantity = request.POST.get('quantity')
+        expiry_date = request.POST.get('expiry_date')
+        batch_number = request.POST.get('batch_number')
+        barcode = request.POST.get('barcode')
+        notes = request.POST.get('notes')
+
+        try:
+            product = Product.objects.get(id=product_id)
+
+            supplier = None
+            if supplier_id:
+                supplier = Supplier.objects.get(id=supplier_id)
+
+            StockEntry.objects.create(
+                product=product,
+                supplier=supplier,
+                quantity_added=quantity,
+                expiry_date=expiry_date if expiry_date else None,
+                batch_number=batch_number,
+                barcode=barcode,
+                notes=notes
+            )
+
+            messages.success(request, "Stock added successfully!")
+            return redirect('addStock')
+
+        except Exception as e:
+            messages.error(request, f"Error adding stock: {e}")
+            return redirect('addStock')
+    products = Product.objects.all()
+    suppliers = Supplier.objects.all()
+    context = {
+        'suppliers': suppliers,
+        'products': products
     }
-    #print(suppliers.values())
-    #print(product)  
-    
-    return render(request,'addStock.html',context)
+
+    return render(request, 'addStock.html', context)
 
 def stockReducing(request):
     return render(request,'reduceStock.html')

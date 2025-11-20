@@ -15,3 +15,18 @@ class Supplier(models.Model):
     contact_number=models.CharField(max_length=20,blank=True)
     email=models.EmailField(blank=True)
     address=models.TextField(blank=True,null=True)
+
+class StockEntry(models.Model):
+    product = models.ForeignKey(Product, on_delete=models.CASCADE, related_name='stock_entries')
+    supplier = models.ForeignKey(Supplier, on_delete=models.SET_NULL, null=True, blank=True)
+
+    quantity_added = models.PositiveIntegerField()
+    expiry_date = models.DateField(null=True, blank=True)
+    batch_number = models.CharField(max_length=50, blank=True)
+    barcode = models.CharField(max_length=100, unique=True)
+
+    notes = models.TextField(blank=True, null=True)
+    date_added = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.product.name} - Added {self.quantity_added}"
