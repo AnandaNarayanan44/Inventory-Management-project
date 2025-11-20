@@ -2,6 +2,8 @@ from django.shortcuts import redirect, render, HttpResponse, get_object_or_404
 from .models import Product,Supplier,StockEntry
 from django.contrib import messages
 import csv
+from datetime import datetime
+from ml.expiry_predict import predict_expiry_risk
 # Create your views here.
 def index(request):
     return render(request,'index.html')
@@ -175,3 +177,29 @@ def addSupplier(request):
         except Exception as e:
             messages.error(request, f"Error adding supplier: {e}")
     return render(request,'addSupplier.html')
+
+
+
+# area for ml
+
+def expiry_risk_view(request):
+    stock_entries = StockEntry.objects.all()
+    risk_level = None
+    days_left = None
+    selected_entry = None
+
+    if request.method == "POST":
+        entry_id = request.POST.get("entry_id")
+        selected_entry = StockEntry.objects.get(id=entry_id)
+
+        expiry = selected_entry.expiry_date
+        risk_level, days_left = predict_expiry_risk(expiry)
+
+    context = {
+        "stock_entries": stock_entries,
+        "risk_level": risk_level,
+        "days_left": days_left,
+        "selected": selected_entry
+    }
+
+    return render(request, "expiry_predict.html", context)

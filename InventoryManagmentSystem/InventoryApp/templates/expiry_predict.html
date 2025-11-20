@@ -1,0 +1,27 @@
+<h2>Expiry Risk Prediction</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <label>Select Stock Entry:</label>
+    <select name="entry_id">
+        {% for entry in stock_entries %}
+        <option value="{{ entry.id }}">
+            {{ entry.product.name }} | Batch: {{ entry.batch_number }} | Exp: {{ entry.expiry_date }}
+        </option>
+        {% endfor %}
+    </select>
+    <button type="submit">Predict</button>
+</form>
+
+{% if risk_level != None %}
+    <h3>Result:</h3>
+    <p><strong>Days Left:</strong> {{ days_left }}</p>
+
+    {% if risk_level == 0 %}
+        <p style="color:green;">✔ SAFE</p>
+    {% elif risk_level == 1 %}
+        <p style="color:orange;">⚠ EXPIRING SOON</p>
+    {% else %}
+        <p style="color:red;">❗ HIGH RISK / NEAR EXPIRE</p>
+    {% endif %}
+{% endif %}

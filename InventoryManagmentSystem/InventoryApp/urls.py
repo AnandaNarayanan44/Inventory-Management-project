@@ -14,6 +14,8 @@ urlpatterns = [
     path('addStock',views.stockAdding,name='addStock'),
     path('reduceStock',views.stockReducing,name='reduceStock'),
     path('addSupplier',views.addSupplier,name='addSupplier'),
+    path("predict-expiry/", views.expiry_risk_view, name="predict_expiry"),
+
 
     
 ]
