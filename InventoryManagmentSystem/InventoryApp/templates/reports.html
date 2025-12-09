@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <h1 class="page-title">Inventory & Sales Reports</h1>
+
+    <div class="stats-grid">
+        <div class="stat-card primary">
+            <div class="stat-label">Total Stock</div>
+            <div class="stat-value">{{ total_stock }}</div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-label">Low Stock Items</div>
+            <div class="stat-value">{{ low_stock|length }}</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-label">Recent Sales Value</div>
+            <div class="stat-value">₹{{ total_sales_value|default:0 }}</div>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Recent Sales</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Customer</th>
+                        <th>Date</th>
+                        <th>Total (₹)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sale in recent_sales %}
+                    <tr>
+                        <td>{{ sale.invoice_number }}</td>
+                        <td>{{ sale.customer_name|default:"Walk-in" }}</td>
+                        <td>{{ sale.sale_date }}</td>
+                        <td>{{ sale.total_amount }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No sales recorded yet.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Recent Stock Additions</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Quantity</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for entry in recent_entries %}
+                    <tr>
+                        <td>{{ entry.product.name }}</td>
+                        <td>{% if entry.warehouse %}{{ entry.warehouse.name }}{% else %}-{% endif %}</td>
+                        <td>{{ entry.quantity_added }}</td>
+                        <td>{{ entry.date_added|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No stock entries.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Recent Reductions</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Qty</th>
+                        <th>Reason</th>
+                        <th>Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in recent_reductions %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{% if item.warehouse %}{{ item.warehouse.name }}{% else %}-{% endif %}</td>
+                        <td>{{ item.quantity_removed }}</td>
+                        <td>{{ item.get_reason_display }}</td>
+                        <td>{{ item.created_at|date:"Y-m-d H:i" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">No reductions recorded.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Low Stock Watchlist</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Available</th>
+                        <th>Threshold</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in low_stock %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.warehouse.name }}</td>
+                        <td>{{ item.quantity_on_hand }}</td>
+                        <td>{{ item.low_stock_threshold }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="4" class="text-center">No items in danger zone.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+

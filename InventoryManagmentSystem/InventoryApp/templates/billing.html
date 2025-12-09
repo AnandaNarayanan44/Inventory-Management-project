@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <h1 class="page-title">Billing & POS</h1>
+
+    <form method="post" id="billingForm">
+        {% csrf_token %}
+        <div class="stats-grid">
+            <div class="stat-card primary">
+                <div class="stat-label">Customer</div>
+                <input type="text" class="form-control" name="customer_name" placeholder="Walk-in customer">
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">Staff</div>
+                <input type="text" class="form-control" name="staff_name" placeholder="Staff name">
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">Sale Date</div>
+                <input type="date" class="form-control" name="sale_date" value="{{ today|default:None }}">
+            </div>
+            <div class="stat-card danger">
+                <div class="stat-label">Invoice #</div>
+                <input type="text" class="form-control" name="invoice_number" placeholder="Auto generated">
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Notes</label>
+            <textarea class="form-control" rows="2" name="notes" placeholder="Optional remarks"></textarea>
+        </div>
+
+        <div class="table-section">
+            <div class="table-header">
+                <h2 class="table-title">Line Items</h2>
+                <button type="button" class="btn btn-primary" id="addRowBtn">
+                    <i class="fas fa-plus"></i> Add Item
+                </button>
+            </div>
+            <div style="overflow-x: auto;">
+                <table class="inventory-table">
+                    <thead>
+                        <tr>
+                            <th>Product</th>
+                            <th>Warehouse</th>
+                            <th>Available</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Line Total</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="billingItemsBody">
+                        <tr>
+                            <td>
+                                <select class="form-select billing-product" name="item_product[]" required>
+                                    <option value="">Select product...</option>
+                                    {% for product in products %}
+                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-gst="{{ product.gst }}">{{ product.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td>
+                                <select class="form-select billing-warehouse" name="item_warehouse[]" required>
+                                    <option value="">Select warehouse...</option>
+                                    {% for warehouse in warehouses %}
+                                    <option value="{{ warehouse.id }}">{{ warehouse.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            <td class="available-stock">-</td>
+                            <td>
+                                <input type="number" class="form-control billing-qty" name="item_quantity[]" min="1" value="1" required>
+                            </td>
+                            <td>
+                                <input type="number" class="form-control billing-price" name="item_price[]" step="0.01" min="0" placeholder="Auto" />
+                            </td>
+                            <td class="line-total">0.00</td>
+                            <td>
+                                <button type="button" class="btn btn-outline-danger btn-sm remove-row">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-label">Subtotal</div>
+                <div class="stat-value" id="subtotalValue">0.00</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Tax (GST)</div>
+                <div class="stat-value" id="taxValue">0.00</div>
+            </div>
+            <div class="stat-card success">
+                <div class="stat-label">Total</div>
+                <div class="stat-value" id="totalValue">0.00</div>
+            </div>
+        </div>
+
+        <div class="form-actions" style="margin-top: 1.5rem;">
+            <a href="{% url 'inventory' %}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Inventory
+            </a>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-receipt"></i> Complete Billing
+            </button>
+        </div>
+    </form>
+</div>
+
+{{ inventory_data|json_script:"inventory-data" }}
+
+<script>
+    const inventoryData = JSON.parse(document.getElementById('inventory-data').textContent || '[]');
+
+    function findStock(productId, warehouseId) {
+        const match = inventoryData.find(
+            entry => String(entry.product_id) === String(productId) && String(entry.warehouse_id) === String(warehouseId)
+        );
+        return match ? match.quantity_on_hand : 0;
+    }
+
+    function updateLine(row) {
+        const productSelect = row.querySelector('.billing-product');
+        const warehouseSelect = row.querySelector('.billing-warehouse');
+        const availableEl = row.querySelector('.available-stock');
+        const qtyInput = row.querySelector('.billing-qty');
+        const priceInput = row.querySelector('.billing-price');
+        const lineTotalEl = row.querySelector('.line-total');
+
+        const priceFromProduct = productSelect.selectedOptions[0]?.dataset.price;
+        if (!priceInput.value && priceFromProduct) {
+            priceInput.value = parseFloat(priceFromProduct).toFixed(2);
+        }
+
+        if (productSelect.value && warehouseSelect.value) {
+            const stock = findStock(productSelect.value, warehouseSelect.value);
+            availableEl.textContent = stock + ' units';
+        } else {
+            availableEl.textContent = '-';
+        }
+
+        const qty = parseFloat(qtyInput.value || 0);
+        const price = parseFloat(priceInput.value || priceFromProduct || 0);
+        const lineTotal = qty * price;
+        lineTotalEl.textContent = lineTotal.toFixed(2);
+        recalcTotals();
+    }
+
+    function recalcTotals() {
+        let subtotal = 0;
+        let tax = 0;
+        document.querySelectorAll('#billingItemsBody tr').forEach(row => {
+            const productSelect = row.querySelector('.billing-product');
+            const qty = parseFloat(row.querySelector('.billing-qty').value || 0);
+            const price = parseFloat(row.querySelector('.billing-price').value || productSelect.selectedOptions[0]?.dataset.price || 0);
+            const gst = parseFloat(productSelect.selectedOptions[0]?.dataset.gst || 0);
+            const lineTotal = qty * price;
+            subtotal += lineTotal;
+            tax += lineTotal * (gst / 100);
+        });
+        document.getElementById('subtotalValue').textContent = subtotal.toFixed(2);
+        document.getElementById('taxValue').textContent = tax.toFixed(2);
+        document.getElementById('totalValue').textContent = (subtotal + tax).toFixed(2);
+    }
+
+    function attachRowEvents(row) {
+        row.querySelectorAll('select, input').forEach(el => {
+            el.addEventListener('change', () => updateLine(row));
+            el.addEventListener('input', () => updateLine(row));
+        });
+        row.querySelector('.remove-row').addEventListener('click', () => {
+            if (document.querySelectorAll('#billingItemsBody tr').length > 1) {
+                row.remove();
+                recalcTotals();
+            }
+        });
+        updateLine(row);
+    }
+
+    document.getElementById('addRowBtn').addEventListener('click', () => {
+        const body = document.getElementById('billingItemsBody');
+        const newRow = body.rows[0].cloneNode(true);
+        newRow.querySelectorAll('input').forEach(input => {
+            input.value = input.classList.contains('billing-qty') ? '1' : '';
+        });
+        newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
+        newRow.querySelector('.available-stock').textContent = '-';
+        newRow.querySelector('.line-total').textContent = '0.00';
+        body.appendChild(newRow);
+        attachRowEvents(newRow);
+    });
+
+    attachRowEvents(document.querySelector('#billingItemsBody tr'));
+</script>
+{% endblock body %}
+
+
+

@@ -9,19 +9,19 @@
     <div class="stats-grid">
         <div class="stat-card primary">
             <div class="stat-label">Total Products in Stock</div>
-            <div class="stat-value">8,492</div>
+            <div class="stat-value">{{ stats.total_stock }}</div>
         </div>
         <div class="stat-card warning">
             <div class="stat-label">Low Stock Items</div>
-            <div class="stat-value">23</div>
+            <div class="stat-value">{{ stats.low_stock }}</div>
         </div>
         <div class="stat-card danger">
             <div class="stat-label">Out of Stock Products</div>
-            <div class="stat-value">5</div>
+            <div class="stat-value">{{ stats.out_of_stock }}</div>
         </div>
         <div class="stat-card success">
             <div class="stat-label">Total Categories</div>
-            <div class="stat-value">12</div>
+            <div class="stat-value">{{ stats.total_categories }}</div>
         </div>
     </div>
 
@@ -36,10 +36,13 @@
         <a  class="btn-custom btn-outline-custom" href="{% url 'addSupplier' %}">
             <i class="fas fa-truck"></i> Add Supplier
         </a>
-        <a href="" class="btn-custom btn-outline-custom">
+        <a href="{% url 'warehouse_management' %}" class="btn-custom btn-outline-custom">
             <i class="fas fa-warehouse"></i> Add Warehouse
         </a>
-        <a href="" class="btn-custom btn-outline-custom">
+        <a href="{% url 'billing' %}" class="btn-custom btn-outline-custom">
+            <i class="fas fa-file-invoice-dollar"></i> Billing
+        </a>
+        <a href="{% url 'inventory_reports' %}" class="btn-custom btn-outline-custom">
             <i class="fas fa-chart-bar"></i> View Reports
         </a>
     </div>
@@ -65,15 +68,16 @@
                 </thead>
                 <tbody>
                     {% for item in inventory_items %}
-                    <tr class="{% if item.stock_level == 0 %}out-of-stock{% elif item.stock_level < item.low_stock_threshold %}low-stock{% elif item.is_expired %}expired{% endif %}">
-                        <td><strong>{{ item.product.name }}</strong></td>
+                    <tr class="{% if item.quantity_on_hand == 0 %}out-of-stock{% elif item.quantity_on_hand < item.low_stock_threshold %}low-stock{% elif item.is_expired %}expired{% endif %}">
+                        <td><strong>{{ item.product.name }}</strong><br><small>{{ item.product.category }}</small></td>
                         <td>
-                            <span class="badge-stock {% if item.stock_level == 0 %}badge-out{% elif item.stock_level < item.low_stock_threshold %}badge-low{% else %}badge-high{% endif %}">
-                                {{ item.stock_level }} units
+                            <span class="badge-stock {% if item.quantity_on_hand == 0 %}badge-out{% elif item.quantity_on_hand < item.low_stock_threshold %}badge-low{% else %}badge-high{% endif %}">
+                                {{ item.quantity_on_hand }} units
                             </span>
+                            <div class="helper-text">Threshold: {{ item.low_stock_threshold }}</div>
                         </td>
                         <td>{{ item.warehouse.name }}</td>
-                        <td>{{ item.supplier.name }}</td>
+                        <td>{% if item.supplier %}{{ item.supplier.name }}{% else %}N/A{% endif %}</td>
                         <td {% if item.is_expired %}style="color: var(--danger-color); font-weight: 600;"{% endif %}>
                             {{ item.expiry_date|default:"N/A" }}
                             {% if item.is_expired %}(EXPIRED){% endif %}
@@ -108,7 +112,7 @@
                 <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Add Stock</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="">
+            <form method="post" action="{% url 'addStock' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
@@ -123,6 +127,10 @@
                     <div class="mb-3">
                         <label class="form-label">Quantity <span style="color: red;">*</span></label>
                         <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Barcode <span style="color: red;">*</span></label>
+                        <input type="text" class="form-control" name="barcode" placeholder="Scan or type barcode" required>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Warehouse <span style="color: red;">*</span></label>
@@ -164,7 +172,7 @@
                 <h5 class="modal-title"><i class="fas fa-minus-circle"></i> Reduce Stock (Sale)</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
             </div>
-            <form method="post" action="">
+            <form method="post" action="{% url 'reduceStock' %}">
                 {% csrf_token %}
                 <div class="modal-body">
                     <div class="mb-3">
@@ -189,6 +197,33 @@
                         <label class="form-label">Quantity Sold <span style="color: red;">*</span></label>
                         <input type="number" class="form-control" name="quantity" placeholder="Enter quantity" min="1" required>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sale Price</label>
+                        <input type="number" class="form-control" name="sale_price" step="0.01" min="0">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Customer Name</label>
+                        <input type="text" class="form-control" name="customer_name" placeholder="Customer">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Sale Date <span style="color: red;">*</span></label>
+                        <input type="date" class="form-control" name="sale_date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Reason <span style="color: red;">*</span></label>
+                        <select class="form-select" name="reason" required>
+                            <option value="sale">Sale</option>
+                            <option value="damage">Damage</option>
+                            <option value="expired">Expired</option>
+                            <option value="theft">Theft</option>
+                            <option value="return">Return to Supplier</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" name="notes" rows="2"></textarea>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -209,6 +244,12 @@
             const text = row.textContent.toLowerCase();
             row.style.display = text.includes(searchTerm) ? '' : 'none';
         });
+    });
+
+    document.querySelectorAll('input[name="sale_date"]').forEach(input => {
+        if (!input.value) {
+            input.value = new Date().toISOString().split('T')[0];
+        }
     });
 </script>
 

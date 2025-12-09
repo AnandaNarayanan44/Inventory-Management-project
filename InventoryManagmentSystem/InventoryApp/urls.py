@@ -15,7 +15,10 @@ urlpatterns = [
     path('reduceStock',views.stockReducing,name='reduceStock'),
     path('addSupplier',views.addSupplier,name='addSupplier'),
     path("predict-expiry/", views.expiry_risk_view, name="predict_expiry"),
-
-
-    
+    path("billing", views.billing, name="billing"),
+    path("inventory/reports", views.inventory_reports, name="inventory_reports"),
+    path("warehouses", views.warehouse_management, name="warehouse_management"),
+    path("inventory/item/<int:pk>/edit", views.edit_inventory_item, name="editInventoryItem"),
+    path("inventory/item/<int:pk>/delete", views.delete_inventory_item, name="deleteInventoryItem"),
+    path("inventory/stock-level/", views.stock_level_api, name="stock_level_api"),
 ]

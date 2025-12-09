@@ -251,24 +251,30 @@
     const stockInfoCard = document.getElementById('stockInfoCard');
     const quantityInput = document.getElementById('quantity');
 
-    function updateStockInfo() {
+    async function updateStockInfo() {
         if (productSelect.value && warehouseSelect.value) {
-            // This is a placeholder - in production, fetch real data via AJAX
-            stockInfoCard.classList.add('show');
-            document.getElementById('currentStock').textContent = '100 units';
-            
-            // Update after stock based on quantity
-            const quantity = parseInt(quantityInput.value) || 0;
-            const afterValue = Math.max(0, 100 - quantity);
-            const afterStockEl = document.getElementById('afterStock');
-            afterStockEl.textContent = afterValue + ' units';
-            
-            // Update color based on level
-            afterStockEl.classList.remove('low', 'out');
-            if (afterValue === 0) {
-                afterStockEl.classList.add('out');
-            } else if (afterValue < 20) {
-                afterStockEl.classList.add('low');
+            try {
+                const response = await fetch(
+                    "{% url 'stock_level_api' %}?product=" + productSelect.value + "&warehouse=" + warehouseSelect.value
+                );
+                const data = await response.json();
+                const currentStock = data.current_stock || 0;
+                stockInfoCard.classList.add('show');
+                document.getElementById('currentStock').textContent = currentStock + ' units';
+                
+                const quantity = parseInt(quantityInput.value) || 0;
+                const afterValue = Math.max(0, currentStock - quantity);
+                const afterStockEl = document.getElementById('afterStock');
+                afterStockEl.textContent = afterValue + ' units';
+
+                afterStockEl.classList.remove('low', 'out');
+                if (afterValue === 0) {
+                    afterStockEl.classList.add('out');
+                } else if (afterValue < 20) {
+                    afterStockEl.classList.add('low');
+                }
+            } catch (error) {
+                console.error(error);
             }
         } else {
             stockInfoCard.classList.remove('show');

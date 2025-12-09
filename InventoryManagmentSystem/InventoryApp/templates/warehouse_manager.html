@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <h1 class="page-title">Warehouse Directory</h1>
+
+    <div class="form-card">
+        <div class="form-header">
+            <i class="fas fa-warehouse"></i>
+            <h2>Add / Update Warehouse</h2>
+            <p>Keep your storage locations up to date.</p>
+        </div>
+        <div class="form-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Name <span class="required">*</span></label>
+                        <input type="text" class="form-control" name="name" placeholder="Central Warehouse" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Location</label>
+                        <input type="text" class="form-control" name="location" placeholder="City / Address">
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Contact Person</label>
+                        <input type="text" class="form-control" name="contact_person" placeholder="Manager name">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Phone</label>
+                        <input type="text" class="form-control" name="phone" placeholder="+91 9876543210">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Notes</label>
+                    <textarea class="form-control" name="notes" rows="2" placeholder="Storage conditions, timings..."></textarea>
+                </div>
+                <div class="form-actions">
+                    <a href="{% url 'inventory' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Back
+                    </a>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save Warehouse
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Existing Warehouses</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Location</th>
+                        <th>Contact</th>
+                        <th>Phone</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for warehouse in warehouses %}
+                    <tr>
+                        <td>{{ warehouse.name }}</td>
+                        <td>{{ warehouse.location|default:"-" }}</td>
+                        <td>{{ warehouse.contact_person|default:"-" }}</td>
+                        <td>{{ warehouse.phone|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="text-center">No warehouses yet. Add one above.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+
+
+
