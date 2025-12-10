@@ -2,56 +2,56 @@
 
 {% block body%}
     <div class="main-container">
-        <h1 class="page-title">Dashboard Overview</h1>
+        <h1 class="page-title">Welcome back{% if request.user.first_name %}, {{ request.user.first_name }}{% endif %}</h1>
 
         <!-- Statistics Cards -->
         <div class="stats-grid">
-            <div class="stat-card primary">
+            <a href="{% url 'product page' %}" class="stat-card primary">
                 <div class="stat-icon">
                     <i class="fas fa-box"></i>
                 </div>
                 <div class="stat-label">Total Products</div>
-                <div class="stat-value">1,245</div>
-            </div>
+                <div class="stat-value">{{ products_count }}</div>
+            </a>
 
-            <div class="stat-card success">
+            <a href="{% url 'inventory' %}" class="stat-card success">
                 <div class="stat-icon">
                     <i class="fas fa-cubes"></i>
                 </div>
                 <div class="stat-label">Total Stock</div>
-                <div class="stat-value">8,492</div>
-            </div>
+                <div class="stat-value">{{ total_stock }}</div>
+            </a>
 
-            <div class="stat-card warning">
+            <a href="{% url 'inventory' %}" class="stat-card warning">
                 <div class="stat-icon">
                     <i class="fas fa-exclamation-triangle"></i>
                 </div>
                 <div class="stat-label">Low Stock Items</div>
-                <div class="stat-value">23</div>
-            </div>
+                <div class="stat-value">{{ low_stock_count }}</div>
+            </a>
 
-            <div class="stat-card danger">
+            <a href="{% url 'inventory_reports' %}" class="stat-card danger">
                 <div class="stat-icon">
-                    <i class="fas fa-fire"></i>
+                    <i class="fas fa-file-invoice-dollar"></i>
                 </div>
-                <div class="stat-label">High Demand Products</div>
-                <div class="stat-value">47</div>
-            </div>
+                <div class="stat-label">Invoices</div>
+                <div class="stat-value">{{ invoices_count }}</div>
+            </a>
         </div>
 
         <!-- Module Shortcuts -->
         <div class="modules-section">
             <h2 class="section-title">Quick Access Modules</h2>
             <div class="modules-grid">
-                <a href="products.html" class="module-card">
+                <a href="{% url 'billing' %}" class="module-card">
                     <div class="module-icon">
-                        <i class="fas fa-box-open"></i>
+                        <i class="fas fa-cash-register"></i>
                     </div>
-                    <div class="module-title">Products Management</div>
-                    <div class="module-description">Add, edit, and manage your product catalog</div>
+                    <div class="module-title">Billing / POS</div>
+                    <div class="module-description">Create invoices and checkout</div>
                 </a>
 
-                <a href="inventory.html" class="module-card">
+                <a href="{% url 'inventory' %}" class="module-card">
                     <div class="module-icon">
                         <i class="fas fa-warehouse"></i>
                     </div>
@@ -59,68 +59,60 @@
                     <div class="module-description">Track stock levels and manage inventory</div>
                 </a>
 
-                <a href="sales-ml.html" class="module-card">
+                <a href="{% url 'sales_page' %}" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                    <div class="module-title">Sales Analytics</div>
+                    <div class="module-description">Charts and sales history</div>
+                </a>
+
+                <a href="{% url 'ml_page' %}" class="module-card">
                     <div class="module-icon">
                         <i class="fas fa-brain"></i>
                     </div>
-                    <div class="module-title">Sales & ML Analytics</div>
-                    <div class="module-description">View sales data and ML-powered insights</div>
+                    <div class="module-title">ML Prediction</div>
+                    <div class="module-description">Predict upcoming sales demand</div>
                 </a>
+
+                {% if request.user.profile.role == 'admin' %}
+                <a href="{% url 'staff_management' %}" class="module-card">
+                    <div class="module-icon">
+                        <i class="fas fa-users-cog"></i>
+                    </div>
+                    <div class="module-title">Staff Management</div>
+                    <div class="module-description">Create users and manage access</div>
+                </a>
+                {% endif %}
             </div>
         </div>
 
-        <!-- ML Insights Preview -->
+        <!-- Recent sales -->
         <div class="insights-section">
             <h2 class="section-title">
-                <i class="fas fa-lightbulb"></i> ML Demand Predictions
+                <i class="fas fa-receipt"></i> Recent Invoices
             </h2>
             <div class="table-container">
                 <table class="insights-table">
                     <thead>
                         <tr>
-                            <th>Product Name</th>
-                            <th>Category</th>
-                            <th>Current Stock</th>
-                            <th>Predicted Demand</th>
+                            <th>Invoice</th>
+                            <th>Customer</th>
+                            <th>Date</th>
+                            <th>Total</th>
                         </tr>
                     </thead>
                     <tbody>
+                        {% for sale in recent_sales %}
                         <tr>
-                            <td><strong>Wireless Mouse Pro</strong></td>
-                            <td>Electronics</td>
-                            <td>156 units</td>
-                            <td><span class="demand-badge demand-high">High</span></td>
+                            <td><a href="{% url 'invoice_detail' sale.id %}">{{ sale.invoice_number }}</a></td>
+                            <td>{{ sale.customer_name|default:"Walk-in" }}</td>
+                            <td>{{ sale.sale_date }}</td>
+                            <td>₹{{ sale.total_amount }}</td>
                         </tr>
-                        <tr>
-                            <td><strong>Office Chair Ergonomic</strong></td>
-                            <td>Furniture</td>
-                            <td>45 units</td>
-                            <td><span class="demand-badge demand-high">High</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>LED Desk Lamp</strong></td>
-                            <td>Lighting</td>
-                            <td>89 units</td>
-                            <td><span class="demand-badge demand-medium">Medium</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>USB-C Cable 2m</strong></td>
-                            <td>Accessories</td>
-                            <td>234 units</td>
-                            <td><span class="demand-badge demand-medium">Medium</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Notebook A5 Pack</strong></td>
-                            <td>Stationery</td>
-                            <td>412 units</td>
-                            <td><span class="demand-badge demand-low">Low</span></td>
-                        </tr>
-                        <tr>
-                            <td><strong>Mechanical Keyboard RGB</strong></td>
-                            <td>Electronics</td>
-                            <td>78 units</td>
-                            <td><span class="demand-badge demand-high">High</span></td>
-                        </tr>
+                        {% empty %}
+                        <tr><td colspan="4" class="text-center">No invoices yet.</td></tr>
+                        {% endfor %}
                     </tbody>
                 </table>
             </div>

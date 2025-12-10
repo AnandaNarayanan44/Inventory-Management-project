@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <h1 class="page-title">Sales Overview</h1>
+    <canvas id="dailyChart" height="120"></canvas>
+
+    <div class="table-section mt-4">
+        <div class="table-header">
+            <h2 class="table-title">Recent Sales</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Invoice</th>
+                        <th>Date</th>
+                        <th>Customer</th>
+                        <th>Total</th>
+                    </tr>
+                </thead>
+        <tbody>
+            {% for sale in sales %}
+            <tr>
+                <td><a href="{% url 'invoice_detail' sale.id %}">{{ sale.invoice_number }}</a></td>
+                <td>{{ sale.sale_date }}</td>
+                <td>{{ sale.customer_name|default:"Walk-in" }}</td>
+                <td>₹{{ sale.total_amount }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const labels = [{% for row in daily %}"{{ row.sale_date }}",{% endfor %}];
+    const data = [{% for row in daily %}{{ row.total|default:0 }},{% endfor %}];
+    const ctx = document.getElementById('dailyChart');
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Daily Sales',
+                data: data,
+                borderColor: '#4e73df',
+                backgroundColor: 'rgba(78,115,223,0.1)'
+            }]
+        },
+    });
+</script>
+{% endblock body %}
+

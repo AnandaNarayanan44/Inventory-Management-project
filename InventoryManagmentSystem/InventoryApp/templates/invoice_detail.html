@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="page-title mb-0">Invoice {{ sale.invoice_number }}</h1>
+        <div>
+            {% if sale.pdf_file %}
+            <a href="{% url 'invoice_pdf' sale.id %}" class="btn btn-outline-secondary" target="_blank">
+                <i class="fas fa-download"></i> Download PDF
+            </a>
+            {% endif %}
+            <button onclick="window.print()" class="btn btn-primary">
+                <i class="fas fa-print"></i> Print
+            </button>
+        </div>
+    </div>
+
+    <div class="card p-3 mb-3">
+        <div class="row">
+            <div class="col-md-6">
+                <p class="mb-1"><strong>Customer:</strong> {{ sale.customer_name|default:"Walk-in" }}</p>
+                <p class="mb-1"><strong>Date:</strong> {{ sale.sale_date }}</p>
+                <p class="mb-1"><strong>Notes:</strong> {{ sale.notes|default:"-" }}</p>
+            </div>
+            <div class="col-md-6 text-md-end">
+                <p class="mb-1"><strong>Subtotal:</strong> ₹{{ sale.subtotal }}</p>
+                <p class="mb-1"><strong>GST:</strong> ₹{{ sale.tax_amount }}</p>
+                <p class="mb-1"><strong>Total:</strong> ₹{{ sale.total_amount }}</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Product</th>
+                        <th>Warehouse</th>
+                        <th>Qty</th>
+                        <th>Unit Price</th>
+                        <th>GST %</th>
+                        <th>Line Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in items %}
+                    <tr>
+                        <td>{{ item.product.name }}</td>
+                        <td>{{ item.warehouse.name }}</td>
+                        <td>{{ item.quantity }}</td>
+                        <td>₹{{ item.unit_price }}</td>
+                        <td>{{ item.gst_percent }}</td>
+                        <td>₹{{ item.line_total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+

@@ -9,6 +9,8 @@
             <div class="stat-card primary">
                 <div class="stat-label">Customer</div>
                 <input type="text" class="form-control" name="customer_name" placeholder="Walk-in customer">
+                <input type="text" class="form-control mt-2" name="customer_phone" placeholder="Phone (optional)">
+                <input type="email" class="form-control mt-2" name="customer_email" placeholder="Email (optional)">
             </div>
             <div class="stat-card success">
                 <div class="stat-label">Staff</div>
@@ -198,6 +200,8 @@
     attachRowEvents(document.querySelector('#billingItemsBody tr'));
 </script>
 {% endblock body %}
+
+
 
 
 

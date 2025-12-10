@@ -1,0 +1,43 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Inventory</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/index.css'%}">
+</head>
+<body class="bg-light">
+    <div class="container" style="max-width: 480px; margin-top: 80px;">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="mb-3 text-center">Inventory Login</h3>
+                {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-2">{{ message }}</div>
+                {% endfor %}
+                {% endif %}
+                <form method="post">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Email / Username</label>
+                        <input type="text" class="form-control" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Login</button>
+                </form>
+                <p class="text-muted mt-3 mb-0 small">
+                    Default admin: admin@example.com / Admin@123 <br>
+                    Default staff: staff@example.com / Staff@123
+                </p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

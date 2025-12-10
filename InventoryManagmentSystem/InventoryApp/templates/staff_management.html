@@ -1,0 +1,84 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h1 class="page-title mb-0">Staff Management</h1>
+    </div>
+
+    <div class="card p-3 mb-4">
+        <form method="post" class="row g-3">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="create">
+            <div class="col-md-4">
+                <label class="form-label">Full Name</label>
+                <input type="text" class="form-control" name="name" placeholder="John Doe">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Email (username)</label>
+                <input type="email" class="form-control" name="email" required>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Role</label>
+                <select class="form-select" name="role">
+                    <option value="staff">Staff</option>
+                    <option value="admin">Admin</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Temp Password</label>
+                <input type="text" class="form-control" name="password" placeholder="auto">
+            </div>
+            <div class="col-12">
+                <button class="btn btn-primary"><i class="fas fa-save"></i> Create / Update</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">All Staff</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sp in staff_profiles %}
+                    <tr>
+                        <td>{{ sp.user.get_full_name|default:sp.user.username }}</td>
+                        <td>{{ sp.user.email }}</td>
+                        <td>{{ sp.get_role_display }}</td>
+                        <td>{{ sp.active|yesno:"Active,Disabled" }}</td>
+                        <td>{{ sp.last_login_at|default:"-" }}</td>
+                        <td>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="toggle">
+                                <input type="hidden" name="profile_id" value="{{ sp.id }}">
+                                <button class="btn btn-sm btn-outline-secondary">{{ sp.active|yesno:"Deactivate,Activate" }}</button>
+                            </form>
+                            <form method="post" class="d-inline">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="reset">
+                                <input type="hidden" name="profile_id" value="{{ sp.id }}">
+                                <input type="hidden" name="new_password" value="Staff@123">
+                                <button class="btn btn-sm btn-outline-danger">Reset PW</button>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+

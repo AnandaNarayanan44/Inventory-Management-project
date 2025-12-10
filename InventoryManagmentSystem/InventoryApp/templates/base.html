@@ -21,7 +21,7 @@
     <!-- Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="{% url 'index page' %}">
                 <i class="fas fa-boxes"></i>
                 Smart Inventory Management
             </a>
@@ -56,14 +56,32 @@
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="{% url 'predict_expiry' %}">
-                            <i class="fas fa-chart-line"></i> Sales & ML
+                        <a class="nav-link" href="{% url 'sales_page' %}">
+                            <i class="fas fa-chart-line"></i> Sales
                         </a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link" href="logout.html">
+                        <a class="nav-link" href="{% url 'ml_page' %}">
+                            <i class="fas fa-brain"></i> ML
+                        </a>
+                    </li>
+                    {% if request.user.is_authenticated and request.user.profile.role == 'admin' %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'staff_management' %}">
+                            <i class="fas fa-users-cog"></i> Staff
+                        </a>
+                    </li>
+                    {% endif %}
+                    <li class="nav-item">
+                        {% if request.user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'logout' %}">
                             <i class="fas fa-sign-out-alt"></i> Logout
                         </a>
+                        {% else %}
+                        <a class="nav-link" href="{% url 'login' %}">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </a>
+                        {% endif %}
                     </li>
                 </ul>
             </div>

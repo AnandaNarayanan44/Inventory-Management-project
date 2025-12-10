@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block body %}
+<div class="main-container">
+    <h1 class="page-title">Admin Dashboard</h1>
+    <div class="table-section">
+        <div class="table-header">
+            <h2 class="table-title">Staff Accounts</h2>
+        </div>
+        <div style="overflow-x: auto;">
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Active</th>
+                        <th>Last Login</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sp in staff_profiles %}
+                    <tr>
+                        <td>{{ sp.user.get_full_name|default:sp.user.username }}</td>
+                        <td>{{ sp.user.email }}</td>
+                        <td>{{ sp.get_role_display }}</td>
+                        <td>{{ sp.active }}</td>
+                        <td>{{ sp.last_login_at|default:"-" }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="text-center">No staff yet</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock body %}
+
