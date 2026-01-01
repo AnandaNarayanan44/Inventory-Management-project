@@ -2,6 +2,7 @@ from decimal import Decimal, ROUND_HALF_UP
 import csv
 import io
 import os
+from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import wraps
 
@@ -20,6 +21,7 @@ from django.utils import timezone
 from xhtml2pdf import pisa
 
 from ml.expiry_predict import predict_expiry_risk
+from ml.demand_predict import predict_all_products_demand
 from .models import (
     InventoryItem,
     MLModelArtifact,
@@ -939,12 +941,13 @@ def sales_page(request):
 @login_required
 @role_required([StaffProfile.ROLE_ADMIN, StaffProfile.ROLE_STAFF])
 def ml_page(request):
-    """Simple ML page that trains on past sales totals and predicts tomorrow."""
+    """Comprehensive ML page with sales prediction and product demand forecasting."""
     from sklearn.linear_model import LinearRegression
     import numpy as np
 
-    message = None
-    prediction = None
+    # Sales Prediction Section
+    sales_message = None
+    sales_prediction = None
     model_name = "sales_linear_regression"
 
     sales = Sale.objects.values("sale_date").annotate(total=Sum("total_amount")).order_by("sale_date")
@@ -954,7 +957,7 @@ def ml_page(request):
         reg = LinearRegression()
         reg.fit(days, totals)
         tomorrow_offset = np.array([[ (timezone.now().date() - sales[0]["sale_date"]).days + 1 ]])
-        prediction = reg.predict(tomorrow_offset)[0]
+        sales_prediction = reg.predict(tomorrow_offset)[0]
 
         # persist model artifact
         model_dir = settings.MEDIA_ROOT / "ml_models"
@@ -972,14 +975,67 @@ def ml_page(request):
             },
         )
     else:
-        message = "Not enough sales data to train. Create a few invoices first."
+        sales_message = "Not enough sales data to train. Create a few invoices first."
+
+    # Product Demand Prediction Section
+    products = Product.objects.filter(active=True).order_by("name")
+    demand_predictions = []
+    
+    def get_sales_history_for_product(product_id):
+        """Helper function to get sales history for a product."""
+        # Get last 60 days of sales for this product
+        start_date = timezone.now().date() - timedelta(days=60)
+        sale_items = SaleItem.objects.filter(
+            product_id=product_id,
+            sale__sale_date__gte=start_date
+        ).select_related('sale').order_by('sale__sale_date')
+        
+        # Group by date
+        daily_sales = defaultdict(int)
+        for item in sale_items:
+            daily_sales[item.sale.sale_date] += item.quantity
+        
+        # Convert to list of dicts
+        history = [
+            {'date': date, 'quantity': qty}
+            for date, qty in sorted(daily_sales.items())
+        ]
+        return history
+    
+    # Get demand predictions
+    demand_predictions = []
+    if products.exists():
+        try:
+            # Get current stock for each product and prepare for prediction
+            products_list = list(products)
+            for product in products_list:
+                # Get total stock across all warehouses
+                total_stock = InventoryItem.objects.filter(
+                    product=product
+                ).aggregate(total=Sum('quantity_on_hand'))['total'] or 0
+                product.current_stock = total_stock
+            
+            # Get demand predictions
+            sales_history_func = lambda pid: get_sales_history_for_product(pid)
+            demand_predictions = predict_all_products_demand(products_list, sales_history_func, days_ahead=7)
+            
+            # Sort by predicted demand (highest first)
+            if demand_predictions:
+                demand_predictions.sort(key=lambda x: x.get('predicted_demand', 0), reverse=True)
+        except Exception as e:
+            # If prediction fails, return empty list
+            # Log error in development (you can add proper logging if needed)
+            print(f"Error in demand prediction: {e}")
+            demand_predictions = []
 
     return render(
         request,
         "ml_page.html",
         {
-            "prediction": prediction,
-            "message": message,
-            "samples": list(sales),
+            "sales_prediction": sales_prediction,
+            "sales_message": sales_message,
+            "sales_samples": list(sales),
+            "demand_predictions": demand_predictions,
+            "total_products": products.count(),
         },
     )

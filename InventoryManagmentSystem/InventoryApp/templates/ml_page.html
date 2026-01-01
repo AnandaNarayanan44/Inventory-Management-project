@@ -1,39 +1,190 @@
 {% extends 'base.html' %}
+{% load static %}
 {% block body %}
-<div class="main-container">
-    <h1 class="page-title">Sales Prediction (ML)</h1>
-    {% if message %}
-        <div class="alert alert-warning">{{ message }}</div>
-    {% endif %}
-    {% if prediction %}
-        <div class="alert alert-success">Predicted sales for tomorrow: ₹{{ prediction|floatformat:2 }}</div>
-    {% endif %}
+<link rel="stylesheet" href="{% static 'css/ml_page.css' %}">
 
-    <div class="table-section">
-        <div class="table-header">
-            <h2 class="table-title">Training Samples</h2>
+<div class="main-container">
+    <div class="ml-header">
+        <h1 class="page-title">
+            <i class="fas fa-brain"></i> Machine Learning Insights
+        </h1>
+        <p class="page-subtitle">AI-powered predictions for sales and product demand forecasting</p>
+    </div>
+
+    <!-- Sales Prediction Section -->
+    <div class="ml-section">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <i class="fas fa-chart-line section-icon"></i>
+                <h2 class="section-title">Sales Revenue Prediction</h2>
+            </div>
+            <span class="section-badge">Linear Regression</span>
         </div>
-        <div style="overflow-x: auto;">
-            <table class="inventory-table">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Total</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for row in samples %}
-                    <tr>
-                        <td>{{ row.sale_date }}</td>
-                        <td>{{ row.total }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="2" class="text-center">No data yet.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+        
+        <div class="prediction-card sales-card">
+            {% if sales_message %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i> {{ sales_message }}
+                </div>
+            {% elif sales_prediction %}
+                <div class="prediction-content">
+                    <div class="prediction-main">
+                        <div class="prediction-label">Predicted Sales (Next Day)</div>
+                        <div class="prediction-value">₹{{ sales_prediction|floatformat:2 }}</div>
+                        <div class="prediction-subtitle">Based on {{ sales_samples|length }} days of historical data</div>
+                    </div>
+                    <div class="prediction-icon">
+                        <i class="fas fa-coins"></i>
+                    </div>
+                </div>
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i> Generate some sales to see predictions
+                </div>
+            {% endif %}
+        </div>
+
+        {% if sales_samples %}
+        <div class="data-table-section">
+            <h3 class="table-title">Historical Sales Data</h3>
+            <div class="table-wrapper">
+                <table class="ml-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Total Revenue</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in sales_samples %}
+                        <tr>
+                            <td>{{ row.sale_date|date:"M d, Y" }}</td>
+                            <td class="amount-cell">₹{{ row.total|floatformat:2 }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Product Demand Prediction Section -->
+    <div class="ml-section">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <i class="fas fa-boxes section-icon"></i>
+                <h2 class="section-title">Product Demand Forecasting</h2>
+            </div>
+            <span class="section-badge">Demand Prediction</span>
+        </div>
+
+        {% if demand_predictions %}
+            <div class="stats-summary">
+                <div class="stat-item">
+                    <div class="stat-number">{{ total_products }}</div>
+                    <div class="stat-text">Products Analyzed</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number">{{ demand_predictions|length }}</div>
+                    <div class="stat-text">With Predictions</div>
+                </div>
+            </div>
+
+            <div class="demand-grid">
+                {% for pred in demand_predictions %}
+                <div class="demand-card">
+                    <div class="demand-card-header">
+                        <h3 class="product-name">{{ pred.product_name }}</h3>
+                        <span class="category-badge">{{ pred.category }}</span>
+                    </div>
+                    
+                    <div class="demand-metrics">
+                        <div class="metric-row">
+                            <span class="metric-label">
+                                <i class="fas fa-crystal-ball"></i> Predicted Demand (7 days)
+                            </span>
+                            <span class="metric-value highlight">{{ pred.predicted_demand|floatformat:0 }} units</span>
+                        </div>
+                        
+                        <div class="metric-row">
+                            <span class="metric-label">
+                                <i class="fas fa-warehouse"></i> Current Stock
+                            </span>
+                            <span class="metric-value {% if pred.current_stock < pred.predicted_demand %}low-stock{% endif %}">
+                                {{ pred.current_stock }} units
+                            </span>
+                        </div>
+                        
+                        <div class="metric-row">
+                            <span class="metric-label">
+                                <i class="fas fa-chart-line"></i> Current Average
+                            </span>
+                            <span class="metric-value">{{ pred.current_avg|floatformat:1 }} units/day</span>
+                        </div>
+                    </div>
+
+                    <div class="demand-footer">
+                        <div class="trend-indicator trend-{% if pred.trend == 'increasing' %}increasing{% elif pred.trend == 'decreasing' %}decreasing{% else %}stable{% endif %}">
+                            <i class="fas fa-{% if pred.trend == 'increasing' %}arrow-up{% elif pred.trend == 'decreasing' %}arrow-down{% else %}minus{% endif %}"></i>
+                            <span>{% if pred.trend == 'insufficient_data' %}Insufficient Data{% else %}{{ pred.trend|title }} Trend{% endif %}</span>
+                        </div>
+                        <div class="confidence-badge confidence-{{ pred.confidence }}">
+                            <i class="fas fa-{% if pred.confidence == 'high' %}check-circle{% elif pred.confidence == 'medium' %}exclamation-circle{% else %}question-circle{% endif %}"></i>
+                            <span>{{ pred.confidence|title }} Confidence</span>
+                        </div>
+                    </div>
+                    
+                    {% if pred.message %}
+                    <div class="prediction-message">
+                        <i class="fas fa-info-circle"></i> {{ pred.message }}
+                    </div>
+                    {% endif %}
+
+                    {% if pred.current_stock < pred.predicted_demand %}
+                    <div class="stock-alert">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        Low stock warning: Consider restocking
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-box-open"></i>
+                <h3>No Product Predictions Available</h3>
+                <p>Create some sales transactions to generate demand predictions for your products.</p>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- ML Models Info Section -->
+    <div class="ml-section">
+        <div class="section-header">
+            <div class="section-title-wrapper">
+                <i class="fas fa-cogs section-icon"></i>
+                <h2 class="section-title">ML Models Information</h2>
+            </div>
+        </div>
+        
+        <div class="info-cards">
+            <div class="info-card">
+                <i class="fas fa-chart-line"></i>
+                <h4>Sales Prediction Model</h4>
+                <p>Uses Linear Regression to predict future sales revenue based on historical daily totals.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-boxes"></i>
+                <h4>Demand Forecasting Model</h4>
+                <p>Analyzes product sales patterns to predict future demand and identify restocking needs.</p>
+            </div>
+            <div class="info-card">
+                <i class="fas fa-sync-alt"></i>
+                <h4>Auto-Training</h4>
+                <p>Models are automatically retrained with new sales data to improve accuracy over time.</p>
+            </div>
         </div>
     </div>
 </div>
 {% endblock body %}
-
