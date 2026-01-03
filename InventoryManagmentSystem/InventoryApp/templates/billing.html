@@ -42,6 +42,7 @@
                 <table class="inventory-table">
                     <thead>
                         <tr>
+                            <th>Barcode</th>
                             <th>Product</th>
                             <th>Warehouse</th>
                             <th>Available</th>
@@ -54,10 +55,13 @@
                     <tbody id="billingItemsBody">
                         <tr>
                             <td>
+                                <input type="text" class="form-control billing-barcode" name="item_barcode[]" placeholder="Scan or enter barcode" autocomplete="off">
+                            </td>
+                            <td>
                                 <select class="form-select billing-product" name="item_product[]" required>
                                     <option value="">Select product...</option>
                                     {% for product in products %}
-                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-gst="{{ product.gst }}">{{ product.name }}</option>
+                                    <option value="{{ product.id }}" data-price="{{ product.price }}" data-gst="{{ product.gst }}" data-barcode="{{ product.barcode|default:'' }}">{{ product.name }}</option>
                                     {% endfor %}
                                 </select>
                             </td>
@@ -170,11 +174,85 @@
         document.getElementById('totalValue').textContent = (subtotal + tax).toFixed(2);
     }
 
+    async function fetchProductByBarcode(barcode, row) {
+        if (!barcode || barcode.trim() === '') {
+            return;
+        }
+
+        try {
+            const response = await fetch(`/api/product-by-barcode/?barcode=${encodeURIComponent(barcode.trim())}`);
+            const data = await response.json();
+
+            if (response.ok && data.id) {
+                const productSelect = row.querySelector('.billing-product');
+                // Find and select the product
+                for (let option of productSelect.options) {
+                    if (option.value == data.id) {
+                        productSelect.value = data.id;
+                        // Trigger change event to update price and other fields
+                        productSelect.dispatchEvent(new Event('change'));
+                        break;
+                    }
+                }
+            } else {
+                // Product not found - show error but don't block manual entry
+                const barcodeInput = row.querySelector('.billing-barcode');
+                barcodeInput.style.borderColor = '#dc3545';
+                setTimeout(() => {
+                    barcodeInput.style.borderColor = '';
+                }, 2000);
+            }
+        } catch (error) {
+            console.error('Error fetching product by barcode:', error);
+        }
+    }
+
     function attachRowEvents(row) {
-        row.querySelectorAll('select, input').forEach(el => {
-            el.addEventListener('change', () => updateLine(row));
-            el.addEventListener('input', () => updateLine(row));
+        const barcodeInput = row.querySelector('.billing-barcode');
+        let barcodeTimeout;
+
+        // Handle barcode input with debounce
+        barcodeInput.addEventListener('input', (e) => {
+            clearTimeout(barcodeTimeout);
+            const barcode = e.target.value.trim();
+            
+            if (barcode) {
+                // Debounce: wait 500ms after user stops typing before fetching
+                barcodeTimeout = setTimeout(() => {
+                    fetchProductByBarcode(barcode, row);
+                }, 500);
+            }
         });
+
+        // Handle Enter key for immediate barcode scan (common with barcode scanners)
+        barcodeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                clearTimeout(barcodeTimeout);
+                const barcode = e.target.value.trim();
+                if (barcode) {
+                    fetchProductByBarcode(barcode, row);
+                }
+            }
+        });
+
+        // Sync barcode field when product is manually selected
+        const productSelect = row.querySelector('.billing-product');
+        productSelect.addEventListener('change', () => {
+            const selectedOption = productSelect.selectedOptions[0];
+            if (selectedOption && selectedOption.dataset.barcode) {
+                barcodeInput.value = selectedOption.dataset.barcode || '';
+            }
+            updateLine(row);
+        });
+
+        row.querySelectorAll('select, input').forEach(el => {
+            if (el !== barcodeInput) {
+                el.addEventListener('change', () => updateLine(row));
+                el.addEventListener('input', () => updateLine(row));
+            }
+        });
+        
         row.querySelector('.remove-row').addEventListener('click', () => {
             if (document.querySelectorAll('#billingItemsBody tr').length > 1) {
                 row.remove();
@@ -188,13 +266,21 @@
         const body = document.getElementById('billingItemsBody');
         const newRow = body.rows[0].cloneNode(true);
         newRow.querySelectorAll('input').forEach(input => {
-            input.value = input.classList.contains('billing-qty') ? '1' : '';
+            if (input.classList.contains('billing-qty')) {
+                input.value = '1';
+            } else if (input.classList.contains('billing-barcode')) {
+                input.value = '';
+            } else {
+                input.value = '';
+            }
         });
         newRow.querySelectorAll('select').forEach(select => select.selectedIndex = 0);
         newRow.querySelector('.available-stock').textContent = '-';
         newRow.querySelector('.line-total').textContent = '0.00';
         body.appendChild(newRow);
         attachRowEvents(newRow);
+        // Focus on barcode input for new row
+        newRow.querySelector('.billing-barcode').focus();
     });
 
     attachRowEvents(document.querySelector('#billingItemsBody tr'));

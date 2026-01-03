@@ -29,4 +29,5 @@ urlpatterns = [
     path("inventory/item/<int:pk>/delete", views.delete_inventory_item, name="deleteInventoryItem"),
     path("inventory/stock-level/", views.stock_level_api, name="stock_level_api"),
     path("ml/", views.ml_page, name="ml_page"),
+    path("api/product-by-barcode/", views.get_product_by_barcode, name="get_product_by_barcode"),
 ]

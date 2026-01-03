@@ -690,6 +690,33 @@ def billing(request):
 
 
 @login_required
+@role_required([StaffProfile.ROLE_ADMIN, StaffProfile.ROLE_STAFF])
+def get_product_by_barcode(request):
+    """API endpoint to fetch product details by barcode"""
+    if request.method != "GET":
+        return JsonResponse({"error": "Method not allowed"}, status=405)
+    
+    barcode = request.GET.get("barcode", "").strip()
+    if not barcode:
+        return JsonResponse({"error": "Barcode is required"}, status=400)
+    
+    try:
+        product = Product.objects.filter(active=True, barcode=barcode).first()
+        if not product:
+            return JsonResponse({"error": "Product not found with this barcode"}, status=404)
+        
+        return JsonResponse({
+            "id": product.id,
+            "name": product.name,
+            "price": str(product.price),
+            "gst": str(product.gst),
+            "category": product.category,
+        })
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=500)
+
+
+@login_required
 def invoice_detail(request, pk):
     sale = get_object_or_404(Sale.objects.prefetch_related("items__product", "items__warehouse"), pk=pk)
     return render(request, "invoice_detail.html", {"sale": sale, "items": sale.items.all()})
