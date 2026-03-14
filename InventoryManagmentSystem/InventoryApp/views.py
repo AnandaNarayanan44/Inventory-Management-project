@@ -877,21 +877,36 @@ def stock_level_api(request):
 
 @login_required
 def expiry_risk_view(request):
-    stock_entries = StockEntry.objects.all()
+    stock_entries = StockEntry.objects.filter(expiry_date__isnull=False).order_by('expiry_date')
     risk_level = None
     days_left = None
     selected_entry = None
+    risk_numeric = None
 
     if request.method == "POST":
         entry_id = request.POST.get("entry_id")
-        selected_entry = StockEntry.objects.get(id=entry_id)
-
-        expiry = selected_entry.expiry_date
-        risk_level, days_left = predict_expiry_risk(expiry)
+        try:
+            selected_entry = StockEntry.objects.get(id=entry_id)
+            expiry = selected_entry.expiry_date
+            
+            if expiry:
+                risk_level, days_left = predict_expiry_risk(expiry)
+                # Convert string risk level to numeric for template compatibility
+                risk_mapping = {"Low": 0, "Medium": 1, "High": 2, "Unknown": -1}
+                risk_numeric = risk_mapping.get(risk_level, -1)
+            else:
+                risk_level = "Unknown"
+                risk_numeric = -1
+                days_left = None
+        except StockEntry.DoesNotExist:
+            messages.error(request, "Selected stock entry not found.")
+        except Exception as e:
+            messages.error(request, f"Error predicting expiry risk: {str(e)}")
 
     context = {
         "stock_entries": stock_entries,
         "risk_level": risk_level,
+        "risk_numeric": risk_numeric,
         "days_left": days_left,
         "selected": selected_entry,
     }
@@ -975,34 +990,80 @@ def ml_page(request):
     # Sales Prediction Section
     sales_message = None
     sales_prediction = None
+    sales_accuracy = None
     model_name = "sales_linear_regression"
 
     sales = Sale.objects.values("sale_date").annotate(total=Sum("total_amount")).order_by("sale_date")
-    if sales.count() >= 2:
-        days = np.array([(row["sale_date"] - sales[0]["sale_date"]).days for row in sales]).reshape(-1, 1)
-        totals = np.array([float(row["total"]) for row in sales])
-        reg = LinearRegression()
-        reg.fit(days, totals)
-        tomorrow_offset = np.array([[ (timezone.now().date() - sales[0]["sale_date"]).days + 1 ]])
-        sales_prediction = reg.predict(tomorrow_offset)[0]
+    sales_list = list(sales)
+    
+    if len(sales_list) >= 3:  # Need at least 3 data points for meaningful prediction
+        try:
+            # Prepare data
+            days = np.array([(row["sale_date"] - sales_list[0]["sale_date"]).days for row in sales_list]).reshape(-1, 1)
+            totals = np.array([float(row["total"]) for row in sales_list])
+            
+            # Remove outliers (values more than 3 standard deviations from mean)
+            mean_total = np.mean(totals)
+            std_total = np.std(totals)
+            if std_total > 0:
+                mask = np.abs(totals - mean_total) <= 3 * std_total
+                days = days[mask.flatten()]
+                totals = totals[mask]
+            
+            if len(totals) >= 3:
+                # Train model
+                reg = LinearRegression()
+                reg.fit(days, totals)
+                
+                # Calculate R-squared for model evaluation
+                r2_score = reg.score(days, totals)
+                sales_accuracy = r2_score
+                
+                # Predict for tomorrow
+                last_date = sales_list[-1]["sale_date"]
+                days_since_start = (last_date - sales_list[0]["sale_date"]).days
+                tomorrow_offset = np.array([[days_since_start + 1]])
+                prediction = reg.predict(tomorrow_offset)[0]
+                
+                # Ensure prediction is non-negative and reasonable
+                # Use average of recent sales if prediction is negative or too low
+                recent_avg = float(np.mean(totals[-min(7, len(totals)):]))
+                if prediction < 0:
+                    sales_prediction = max(0, recent_avg * 0.5)  # At least 50% of recent average
+                elif prediction < recent_avg * 0.1:  # If prediction is less than 10% of recent avg
+                    sales_prediction = recent_avg * 0.5
+                else:
+                    sales_prediction = float(prediction)
+                
+                # Persist model artifact
+                model_dir = settings.MEDIA_ROOT / "ml_models"
+                model_dir.mkdir(parents=True, exist_ok=True)
+                import joblib
 
-        # persist model artifact
-        model_dir = settings.MEDIA_ROOT / "ml_models"
-        model_dir.mkdir(parents=True, exist_ok=True)
-        import joblib
-
-        model_path = model_dir / f"{model_name}.pkl"
-        joblib.dump(reg, model_path)
-        MLModelArtifact.objects.update_or_create(
-            name=model_name,
-            defaults={
-                "model_file": f"ml_models/{model_name}.pkl",
-                "trained_on_rows": sales.count(),
-                "notes": "Linear regression on daily totals",
-            },
-        )
+                model_path = model_dir / f"{model_name}.pkl"
+                joblib.dump(reg, model_path)
+                MLModelArtifact.objects.update_or_create(
+                    name=model_name,
+                    defaults={
+                        "model_file": f"ml_models/{model_name}.pkl",
+                        "trained_on_rows": len(totals),
+                        "notes": f"Linear regression on daily totals. R2={r2_score:.3f}",
+                    },
+                )
+            else:
+                sales_message = "Not enough valid sales data after filtering. Need at least 3 sales records."
+        except Exception as e:
+            sales_message = f"Error training sales prediction model: {str(e)}"
+    elif len(sales_list) == 2:
+        # Simple average for 2 data points
+        avg_sales = float(np.mean([float(row["total"]) for row in sales_list]))
+        sales_prediction = avg_sales
+        sales_message = "Limited data (2 sales). Using average as prediction."
     else:
-        sales_message = "Not enough sales data to train. Create a few invoices first."
+        sales_message = (
+            "Not enough sales data to train. Create at least 3 invoices for accurate predictions "
+            "or run: python manage.py seed_ml_sales"
+        )
 
     # Product Demand Prediction Section
     products = Product.objects.filter(active=True).order_by("name")
@@ -1061,6 +1122,7 @@ def ml_page(request):
         {
             "sales_prediction": sales_prediction,
             "sales_message": sales_message,
+            "sales_accuracy": sales_accuracy,
             "sales_samples": list(sales),
             "demand_predictions": demand_predictions,
             "total_products": products.count(),

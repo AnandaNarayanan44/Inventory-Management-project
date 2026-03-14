@@ -60,17 +60,49 @@ def predict_product_demand(product_id, sales_history, days_ahead=7):
                 'message': 'Insufficient variation in sales data'
             }
         
+        # Remove outliers before training
+        qty_mean = np.mean(qty)
+        qty_std = np.std(qty)
+        if qty_std > 0:
+            # Keep values within 2 standard deviations
+            mask = np.abs(qty - qty_mean) <= 2 * qty_std
+            days = days[mask.flatten()]
+            qty = qty[mask]
+        
+        if len(days) < 3:
+            return {
+                'predicted_demand': 0,
+                'confidence': 'low',
+                'trend': 'insufficient_data',
+                'current_avg': float(np.mean(qty)) if len(qty) > 0 else 0,
+                'message': 'Insufficient data after outlier removal'
+            }
+        
         # Train model
         model = LinearRegression()
         model.fit(days, qty)
+        
+        # Calculate model quality metrics
+        try:
+            r2_score = model.score(days, qty)
+        except:
+            r2_score = 0.0
         
         # Predict for next N days
         last_day = max([(date - first_date).days for date in dates])
         future_days = np.array([[last_day + i] for i in range(1, days_ahead + 1)])
         predictions = model.predict(future_days)
         
-        # Calculate average predicted demand (ensure non-negative)
-        avg_prediction = max(0, float(np.mean(predictions)))
+        # Ensure predictions are non-negative
+        predictions = np.maximum(predictions, 0)
+        
+        # Calculate average predicted demand
+        avg_prediction = float(np.mean(predictions))
+        
+        # Use recent average as fallback if prediction is too low
+        recent_avg = float(np.mean(qty[-min(7, len(qty)):]))
+        if avg_prediction < recent_avg * 0.1:  # If prediction is less than 10% of recent avg
+            avg_prediction = recent_avg * 0.5  # Use 50% of recent average
         
         # Calculate trend
         if len(qty) >= 7:
@@ -92,17 +124,31 @@ def predict_product_demand(product_id, sales_history, days_ahead=7):
         else:
             trend = 'stable'
         
-        # Calculate confidence based on data points and variance
+        # Calculate confidence based on data points, variance, and model quality
         variance = float(np.var(qty))
         mean_qty = float(np.mean(qty))
         data_points = len(qty)
         
-        if data_points >= 14 and (mean_qty == 0 or variance < mean_qty * 0.5):
-            confidence = 'high'
-        elif data_points >= 7:
-            confidence = 'medium'
-        else:
-            confidence = 'low'
+        # Adjust confidence based on R² score (r2_score is defined above)
+        try:
+            if r2_score >= 0.7 and data_points >= 14:
+                confidence = 'high'
+            elif r2_score >= 0.5 and data_points >= 7:
+                confidence = 'medium'
+            elif data_points >= 14 and variance < mean_qty * 0.5:
+                confidence = 'medium'
+            elif data_points >= 7:
+                confidence = 'medium'
+            else:
+                confidence = 'low'
+        except:
+            # Fallback if r2_score not available
+            if data_points >= 14 and variance < mean_qty * 0.5:
+                confidence = 'high'
+            elif data_points >= 7:
+                confidence = 'medium'
+            else:
+                confidence = 'low'
         
         return {
             'predicted_demand': round(avg_prediction, 2),
